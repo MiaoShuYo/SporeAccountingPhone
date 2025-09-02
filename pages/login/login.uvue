@@ -1,0 +1,291 @@
+<template>
+  <view class="login-container">
+    <view class="header">
+      <image class="logo" src="/static/logo.png"></image>
+      <text class="app-name">孢子记账</text>
+    </view>
+    
+    <view class="form-container">
+      <view class="form-item">
+        <text class="label">用户名 <text class="required">*</text></text>
+        <input 
+          class="input" 
+          :class="{ 'error': usernameError }"
+          type="text" 
+          v-model="username" 
+          placeholder="请输入用户名"
+          :disabled="loading"
+          @blur="validateUsername"
+        />
+        <text class="field-error" v-if="usernameError">{{ usernameError }}</text>
+      </view>
+      
+      <view class="form-item">
+        <text class="label">密码 <text class="required">*</text></text>
+        <input 
+          class="input" 
+          :class="{ 'error': passwordError }"
+          type="password" 
+          v-model="password" 
+          placeholder="请输入密码"
+          :disabled="loading"
+          @blur="validatePassword"
+        />
+        <text class="field-error" v-if="passwordError">{{ passwordError }}</text>
+      </view>
+      
+      <button 
+        class="login-btn" 
+        :class="{ 'loading': loading }"
+        :disabled="!canLogin || loading"
+        @click="handleLogin"
+      >
+        <text v-if="!loading">登录</text>
+        <text v-else>登录中...</text>
+      </button>
+      
+      <view class="error-message" v-if="errorMessage">
+        <text class="error-text">{{ errorMessage }}</text>
+      </view>
+    </view>
+  </view>
+</template>
+
+<script>
+import { ApiClient } from '../../utils/api.js'
+
+export default {
+  data() {
+    return {
+      username: '',
+      password: '',
+      loading: false,
+      errorMessage: '',
+      usernameError: '',
+      passwordError: ''
+    }
+  },
+  computed: {
+    canLogin() {
+      return this.username.trim() !== '' && 
+             this.password.trim() !== '' && 
+             !this.usernameError && 
+             !this.passwordError
+    }
+  },
+  onLoad() {
+    // 检查是否已经登录
+    if (ApiClient.isTokenValid()) {
+      uni.reLaunch({
+        url: '/pages/index/index'
+      })
+    }
+  },
+  methods: {
+    // 验证用户名
+    validateUsername() {
+      const username = this.username.trim()
+      if (!username) {
+        this.usernameError = '请输入用户名'
+        return false
+      } else if (username.length < 2) {
+        this.usernameError = '用户名至少需要2个字符'
+        return false
+      } else {
+        this.usernameError = ''
+        return true
+      }
+    },
+    
+    // 验证密码
+    validatePassword() {
+      const password = this.password.trim()
+      if (!password) {
+        this.passwordError = '请输入密码'
+        return false
+      } else if (password.length < 6) {
+        this.passwordError = '密码至少需要6个字符'
+        return false
+      } else {
+        this.passwordError = ''
+        return true
+      }
+    },
+    
+    // 验证所有字段
+    validateForm() {
+      const usernameValid = this.validateUsername()
+      const passwordValid = this.validatePassword()
+      return usernameValid && passwordValid
+    },
+    
+    async handleLogin() {
+      // 清除之前的错误信息
+      this.errorMessage = ''
+      
+      // 验证表单
+      if (!this.validateForm()) {
+        this.errorMessage = '请正确填写所有必填项'
+        return
+      }
+      
+      if (!this.canLogin) return
+      
+      this.loading = true
+      
+      try {
+        const result = await ApiClient.getToken(this.username.trim(), this.password.trim())
+        
+        if (result.success) {
+          // 保存token到本地存储
+          uni.setStorageSync('access_token', result.data.access_token)
+          uni.setStorageSync('refresh_token', result.data.refresh_token)
+          uni.setStorageSync('token_expires', new Date().getTime() + result.data.expires_in * 1000)
+          
+          // 显示登录成功提示
+          uni.showToast({
+            title: '登录成功',
+            icon: 'success'
+          })
+          
+          // 延迟跳转到主页
+          setTimeout(() => {
+            uni.reLaunch({
+              url: '/pages/index/index'
+            })
+          }, 1000)
+        } else {
+          this.errorMessage = result.message || '登录失败，请重试'
+        }
+      } catch (error) {
+        console.error('登录错误:', error)
+        this.errorMessage = '网络错误，请检查网络连接'
+      } finally {
+        this.loading = false
+      }
+    }
+  }
+}
+</script>
+
+<style>
+.login-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 60px;
+}
+
+.logo {
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+
+.app-name {
+  font-size: 28px;
+  font-weight: bold;
+  color: white;
+  text-align: center;
+}
+
+.form-container {
+  background: white;
+  border-radius: 20px;
+  padding: 40px 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.form-item {
+  margin-bottom: 25px;
+}
+
+.label {
+  display: block;
+  font-size: 16px;
+  color: #333;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.required {
+  color: #f56565;
+  font-weight: bold;
+}
+
+.input {
+  width: 100%;
+  height: 50px;
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 0 15px;
+  font-size: 16px;
+  background: #f8f9fa;
+  box-sizing: border-box;
+  transition: all 0.3s ease;
+}
+
+.input:focus {
+  border-color: #667eea;
+  background: white;
+}
+
+.input.error {
+  border-color: #f56565;
+  background: #fef5f5;
+}
+
+.field-error {
+  display: block;
+  color: #f56565;
+  font-size: 14px;
+  margin-top: 5px;
+  margin-left: 5px;
+}
+
+.login-btn {
+  width: 100%;
+  height: 50px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: 20px;
+  transition: all 0.3s ease;
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  background: #ccc;
+}
+
+.login-btn.loading {
+  background: #999;
+}
+
+.error-message {
+  margin-top: 15px;
+  padding: 12px;
+  background: #fee;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+}
+
+.error-text {
+  color: #c33;
+  font-size: 14px;
+  text-align: center;
+}
+</style>

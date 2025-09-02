@@ -1,36 +1,161 @@
 <template>
-	<view>
-		<image class="logo" src="/static/logo.png"></image>
-		<text class="title">{{title}}</text>
+	<view class="container">
+		<view class="header">
+			<image class="logo" src="/static/logo.png"></image>
+			<text class="title">{{title}}</text>
+			<text class="welcome" v-if="userInfo">欢迎，{{userInfo.name || userInfo.username}}</text>
+		</view>
+		
+		<view class="content">
+			<text class="description">孢子记账 - 您的智能记账助手</text>
+			
+			<view class="actions">
+				<button class="action-btn" @click="getUserInfo">获取用户信息</button>
+				<button class="logout-btn" @click="handleLogout">退出登录</button>
+			</view>
+		</view>
 	</view>
 </template>
 
 <script>
-	export default {
-		data() {
-			return {
-				title: 'Hello'
+import { ApiClient } from '../../utils/api.js'
+
+export default {
+	data() {
+		return {
+			title: '孢子记账',
+			userInfo: null
+		}
+	},
+	onLoad() {
+		// 检查登录状态
+		this.checkLoginStatus()
+	},
+	onShow() {
+		// 页面显示时重新检查登录状态
+		this.checkLoginStatus()
+	},
+	methods: {
+		checkLoginStatus() {
+			if (!ApiClient.isTokenValid()) {
+				// 未登录或token过期，跳转到登录页
+				uni.reLaunch({
+					url: '/pages/login/login'
+				})
+			} else {
+				// 自动获取用户信息
+				this.getUserInfo()
 			}
 		},
-		onLoad() {
-
+		
+		async getUserInfo() {
+			try {
+				const result = await ApiClient.getUserInfo()
+				if (result.success) {
+					this.userInfo = result.data
+				} else {
+					uni.showToast({
+						title: result.message,
+						icon: 'none'
+					})
+				}
+			} catch (error) {
+				console.error('获取用户信息失败:', error)
+				uni.showToast({
+					title: '获取用户信息失败',
+					icon: 'none'
+				})
+			}
 		},
-		methods: {
-
+		
+		async handleLogout() {
+			uni.showModal({
+				title: '确认退出',
+				content: '确定要退出登录吗？',
+				success: (res) => {
+					if (res.confirm) {
+						ApiClient.logout()
+					}
+				}
+			})
 		}
 	}
+}
 </script>
 
 <style>
-	.logo {
-		height: 100px;
-		width: 100px;
-		margin: 100px auto 25px auto;
-	}
+.container {
+	min-height: 100vh;
+	padding: 40px 20px;
+	background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
 
-	.title {
-		font-size: 18px;
-		color: #8f8f94;
-    text-align: center;
-	}
+.header {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	margin-bottom: 60px;
+}
+
+.logo {
+	height: 80px;
+	width: 80px;
+	border-radius: 20px;
+	margin-bottom: 20px;
+}
+
+.title {
+	font-size: 28px;
+	font-weight: bold;
+	color: #333;
+	text-align: center;
+	margin-bottom: 10px;
+}
+
+.welcome {
+	font-size: 16px;
+	color: #666;
+	text-align: center;
+}
+
+.content {
+	background: white;
+	border-radius: 20px;
+	padding: 30px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.description {
+	font-size: 16px;
+	color: #666;
+	text-align: center;
+	margin-bottom: 40px;
+	display: block;
+}
+
+.actions {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+}
+
+.action-btn {
+	height: 50px;
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	border: none;
+	border-radius: 12px;
+	color: white;
+	font-size: 16px;
+	font-weight: bold;
+}
+
+.logout-btn {
+	height: 50px;
+	background: #f56565;
+	border: none;
+	border-radius: 12px;
+	color: white;
+	font-size: 16px;
+	font-weight: bold;
+}
 </style>
