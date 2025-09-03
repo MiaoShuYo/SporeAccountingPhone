@@ -48,9 +48,15 @@ export class ApiClient {
               data: res.data
             })
           } else {
+            // 优先使用服务端返回的errorMessage
+            let errorMessage = this.getErrorMessage(res)
+            if (res.data && res.data.errorMessage) {
+              errorMessage = res.data.errorMessage
+            }
+            
             resolve({
               success: false,
-              message: this.getErrorMessage(res)
+              message: errorMessage
             })
           }
         },
@@ -79,15 +85,25 @@ export class ApiClient {
           scope: 'api'
         },
         success: (res) => {
+          if (API_CONFIG.DEBUG) {
+            console.log('刷新token响应:', res)
+          }
+          
           if (res.statusCode === 200) {
             resolve({
               success: true,
               data: res.data
             })
           } else {
+            // 优先使用服务端返回的errorMessage
+            let errorMessage = this.getErrorMessage(res)
+            if (res.data && res.data.errorMessage) {
+              errorMessage = res.data.errorMessage
+            }
+            
             resolve({
               success: false,
-              message: this.getErrorMessage(res)
+              message: errorMessage
             })
           }
         },
@@ -113,6 +129,10 @@ export class ApiClient {
           'Authorization': `Bearer ${token}`
         },
         success: (res) => {
+          if (API_CONFIG.DEBUG) {
+            console.log('获取用户信息响应:', res)
+          }
+          
           if (res.statusCode === 200) {
             resolve({
               success: true,
@@ -126,9 +146,15 @@ export class ApiClient {
               message: '登录已过期，请重新登录'
             })
           } else {
+            // 优先使用服务端返回的errorMessage
+            let errorMessage = this.getErrorMessage(res)
+            if (res.data && res.data.errorMessage) {
+              errorMessage = res.data.errorMessage
+            }
+            
             resolve({
               success: false,
-              message: this.getErrorMessage(res)
+              message: errorMessage
             })
           }
         },
@@ -211,14 +237,23 @@ export class ApiClient {
   
   // 获取错误信息
   static getErrorMessage(res) {
-    if (res.data && res.data.title) {
+    // 优先使用服务端返回的errorMessage
+    if (res.data && res.data.errorMessage) {
+      return res.data.errorMessage
+    } else if (res.data && res.data.title) {
       return res.data.title
     } else if (res.data && res.data.error_description) {
       return res.data.error_description
+    } else if (res.data && res.data.message) {
+      return res.data.message
     } else if (res.statusCode === 403) {
       return '用户名或密码错误'
     } else if (res.statusCode === 400) {
       return '请求参数错误'
+    } else if (res.statusCode === 401) {
+      return '身份验证失败'
+    } else if (res.statusCode === 500) {
+      return '服务器内部错误'
     } else {
       return '请求失败，请重试'
     }

@@ -89,6 +89,8 @@ export const API_CONFIG = {
   ```
 
 ### 返回格式
+
+#### 成功响应
 ```json
 {
   "access_token": "访问令牌",
@@ -97,6 +99,15 @@ export const API_CONFIG = {
   "refresh_token": "刷新令牌",
   ".issued": "颁发时间",
   ".expires": "过期时间"
+}
+```
+
+#### 失败响应
+```json
+{
+  "errorMessage": "服务端返回的具体错误信息",
+  "title": "错误标题",
+  "error_description": "OAuth错误描述"
 }
 ```
 
@@ -117,6 +128,20 @@ export const API_CONFIG = {
 - 请求拦截器自动添加Authorization头
 - 登录状态持久化存储
 - 安全的退出登录流程
+- 完善的错误处理机制
+
+## 错误处理
+
+系统按以下优先级处理错误信息：
+
+1. **服务端errorMessage** - 优先显示 `data.errorMessage` 中的错误信息
+2. **标准错误字段** - 依次检查 `data.title`、`data.error_description`、`data.message`
+3. **HTTP状态码** - 根据状态码返回默认错误信息：
+   - 400: 请求参数错误
+   - 401: 身份验证失败
+   - 403: 用户名或密码错误
+   - 500: 服务器内部错误
+4. **通用错误** - 其他情况显示"请求失败，请重试"
 
 ## 注意事项
 
