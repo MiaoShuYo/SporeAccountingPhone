@@ -1,0 +1,17 @@
+:root {
+  --ion-color-primary: #3b82f6;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-medium: #92949c;
+  --ion-color-light: #f4f5f8;
+  --brand-title-font: 'MaShanZhengLocal', 'KaiTi', 'STKaiti', 'FZShuTi', 'FangSong', 'SimKai', serif;
+  --brand-title-gradient: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+}
+
+@font-face {
+  font-family: 'MaShanZhengLocal';
+  src: url('/fonts/MaShanZheng-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
