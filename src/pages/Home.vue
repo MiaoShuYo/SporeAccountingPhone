@@ -24,7 +24,7 @@ async function handleLogout() {
         <IonTitle>首页</IonTitle>
       </IonToolbar>
     </IonHeader>
-    <IonContent class="ion-padding">
+    <IonContent>
       <p>已登录。</p>
       <IonButton expand="block" color="primary" @click="handleLogout">退出登录</IonButton>
     </IonContent>

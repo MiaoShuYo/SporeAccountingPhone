@@ -143,7 +143,7 @@ try {
 
 <template>
   <IonPage>
-    <IonContent class="auth-wrapper ion-padding">
+    <IonContent class="auth-wrapper">
       <div class="auth-center">
         <IonCard class="auth-card">
           <IonCardHeader>
@@ -211,6 +211,7 @@ try {
               </IonItem>
 
               <IonButton class="login-btn" type="submit" expand="block" :disabled="isSubmitting">{{ isSubmitting ? '登录中...' : '登录' }}</IonButton>
+              <IonButton class="register-btn" expand="block" fill="outline" routerLink="/register">没有账号？去注册</IonButton>
             </form>
           </IonCardContent>
         </IonCard>
@@ -224,20 +225,25 @@ try {
 </template>
 
 <style scoped>
-.auth-wrapper { --background: linear-gradient(135deg, #f0f4ff 0%, #ffffff 100%); }
-.auth-center { max-width: 480px; margin: 6vh auto; }
+.auth-wrapper { --background: linear-gradient(135deg, #f0fbf9 0%, #ffffff 100%); }
+.auth-center { max-width: 480px; margin: 0; }
 .auth-card { box-shadow: 0 8px 20px rgba(0,0,0,.06); border-radius: 16px; }
 .row-input { display: flex; gap: 8px; align-items: center; width: 100%; }
-.login-btn { margin-top: 16px; }
+.login-btn { margin-top: 16px; --height: 40px; font-size: 14px; }
+.register-btn { margin-top: 8px; --height: 40px; font-size: 14px; }
 .brand-title {
   text-align: center;
   font-family: var(--brand-title-font);
-  font-size: 28px;
+  font-size: 32px;
   background: var(--brand-title-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
+.auth-card ion-item { --padding-start: 8px; --inner-padding-end: 8px; --min-height: 44px; }
+.auth-card ion-input { font-size: 14px; }
+.auth-card ion-segment-button { --indicator-height: 2px; --padding-start: 8px; --padding-end: 8px; font-size: 14px; }
+.auth-card ion-item ion-icon[slot="start"] { margin-right: 10px; }
 </style>
 
 

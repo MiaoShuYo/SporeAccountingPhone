@@ -31,7 +31,7 @@ onMounted(loadUserinfo)
         <IonTitle>个人信息</IonTitle>
       </IonToolbar>
     </IonHeader>
-    <IonContent class="ion-padding">
+    <IonContent>
       <IonButton size="small" @click="loadUserinfo" :disabled="loading">刷新</IonButton>
       <p v-if="loading">加载中...</p>
       <p v-if="error" style="color:#ef4444">{{ error }}</p>
