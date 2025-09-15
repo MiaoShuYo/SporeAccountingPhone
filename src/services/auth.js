@@ -140,10 +140,10 @@ export async function sendSmsVerificationCode({ phoneNumber, purpose = 2, signal
   }
 }
 
-export async function sendEmailVerificationCode({ email, messageType = 'Login', signal } = {}) {
+export async function sendEmailVerificationCode({ email, messageType = 'VerifyEmail', signal } = {}) {
   const baseEnv = import.meta?.env?.VITE_IDENTITY_BASE_URL || ''
   const base = typeof baseEnv === 'string' ? baseEnv.replace(/\/+$/, '') : ''
-  const url = base ? `${base}/api/auth/emails` : `/identity/api/auth/emails`
+  const url = base ? `${base}/api/auth/emailVerificationCode` : `/identity/api/auth/emailVerificationCode`
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
