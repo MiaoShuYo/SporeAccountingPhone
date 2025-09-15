@@ -1,7 +1,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { loginWithPassword, loginWithSmsCode, loginWithEmailCode, sendSmsVerificationCode, sendEmailVerificationCode } from '../services/auth'
+import { loginWithPassword, loginWithSmsCode, loginWithEmailCode, sendSmsVerificationCode, sendEmailVerificationCode, createCaptcha, verifyCaptcha } from '../services/auth'
 import CaptchaDialog from '../components/CaptchaDialog.vue'
 import { IonPage, IonContent, IonButton, IonItem, IonInput, IonSegment, IonSegmentButton, IonCard, IonCardHeader, IonCardTitle, IonCardContent, IonList, IonIcon, IonToast, IonToggle, IonLabel } from '@ionic/vue'
 import { personOutline, lockClosedOutline, callOutline, mailOutline, keyOutline, eyeOutline, eyeOffOutline } from 'ionicons/icons'
@@ -84,22 +84,26 @@ function startCountdown() {
 async function openCaptchaAndSend(kind) {
   captchaCode.value = ''
   captchaToken.value = ''
-  // 这里假设图形验证码图片地址为 /identity/api/auth/captcha/image?ts=... 返回图片，验证码 token 由后端在登录时校验
-  const base = import.meta?.env?.VITE_IDENTITY_BASE_URL?.replace(/\/+$/, '') || ''
-  const url = base ? `${base}/api/auth/captcha/image?ts=${Date.now()}` : `/identity/api/auth/captcha/image?ts=${Date.now()}`
-  captchaImageUrl.value = url
-  captchaVisible.value = true
-  // 等用户输入图形验证码后，再真正发送短信/邮箱验证码
-  pendingSendKind.value = kind
+  try {
+    const r = await createCaptcha({})
+    captchaImageUrl.value = r.imageUrl || ''
+    captchaToken.value = r.token || ''
+    captchaVisible.value = true
+    pendingSendKind.value = kind
+  } catch (e) {
+    errorMessage.value = e?.message || '获取验证码失败'
+    toastMessage.value = errorMessage.value
+    toastColor.value = 'danger'
+    toastOpen.value = true
+  }
 }
 
 const pendingSendKind = ref('') // 'phone' | 'email'
 async function onCaptchaConfirm(inputCode) {
-  captchaVisible.value = false
   captchaCode.value = inputCode
-  // 真实项目常常需要一个 captcha_token，这里用时间戳代替占位，后端应返回 token
-  captchaToken.value = String(Date.now())
   try {
+    if (!captchaToken.value || !captchaCode.value) throw new Error('请输入图形验证码')
+    await verifyCaptcha({ token: captchaToken.value, code: captchaCode.value })
     if (pendingSendKind.value === 'phone') {
       if (!phoneNumber.value) throw new Error('请输入手机号')
       await sendSmsVerificationCode({ phoneNumber: phoneNumber.value })
@@ -118,6 +122,7 @@ async function onCaptchaConfirm(inputCode) {
     toastColor.value = 'danger'
     toastOpen.value = true
   } finally {
+    captchaVisible.value = false
     pendingSendKind.value = ''
   }
 }
@@ -244,6 +249,21 @@ try {
 .auth-card ion-input { font-size: 14px; }
 .auth-card ion-segment-button { --indicator-height: 2px; --padding-start: 8px; --padding-end: 8px; font-size: 14px; }
 .auth-card ion-item ion-icon[slot="start"] { margin-right: 10px; }
+
+@media (orientation: landscape) {
+  .auth-center {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  .auth-card {
+    width: 100%;
+    max-width: 480px;
+  }
+}
 </style>
 
 

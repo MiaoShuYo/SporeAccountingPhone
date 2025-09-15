@@ -31,7 +31,7 @@ onMounted(loadUserinfo)
         <IonTitle>个人信息</IonTitle>
       </IonToolbar>
     </IonHeader>
-    <IonContent>
+    <IonContent class="profile-content">
       <IonButton size="small" @click="loadUserinfo" :disabled="loading">刷新</IonButton>
       <p v-if="loading">加载中...</p>
       <p v-if="error" style="color:#ef4444">{{ error }}</p>
@@ -46,4 +46,14 @@ onMounted(loadUserinfo)
   
 </template>
 
+<style scoped>
+@media (orientation: landscape) {
+  .profile-content::part(scroll) {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+</style>
 

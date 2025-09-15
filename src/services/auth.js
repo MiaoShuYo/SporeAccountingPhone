@@ -39,6 +39,58 @@ export async function loginWithPassword({ username, password, signal }) {
   return { token, refreshToken, raw: data }
 }
 
+// 生成图形验证码（返回 { token, imageUrl }），依照身份认证API: GET /identity/api/captcha/create
+export async function createCaptcha({ signal } = {}) {
+  const baseEnv = import.meta?.env?.VITE_IDENTITY_BASE_URL || ''
+  const base = typeof baseEnv === 'string' ? baseEnv.replace(/\/+$/, '') : ''
+  const url = base ? `${base}/api/captcha/create` : `/identity/api/captcha/create`
+  const res = await fetch(url, { method: 'GET', signal })
+  const contentType = res.headers.get('content-type') || ''
+  const isJson = contentType.includes('application/json') || contentType.includes('text/json')
+  const data = isJson ? await res.json().catch(() => ({})) : await res.text().catch(() => '')
+  if (!res.ok) {
+    const message = isJson ? (data?.errorMessage || data?.message || '获取验证码失败') : (data || '获取验证码失败')
+    const err = new Error(message)
+    err.data = data
+    throw err
+  }
+  // 兼容多种返回形态
+  let token = ''
+  let imageUrl = ''
+  if (typeof data === 'string') {
+    // 假设是裸 base64
+    token = ''
+    imageUrl = data.startsWith('data:') ? data : `data:image/png;base64,${data}`
+  } else if (data && typeof data === 'object') {
+    token = data.token || data.captcha_token || data.id || data.key || ''
+    const img = data.image || data.imageBase64 || data.image_base64 || data.base64 || data.data || ''
+    imageUrl = img ? (String(img).startsWith('data:') ? img : `data:image/png;base64,${img}`) : ''
+  }
+  return { token, imageUrl, raw: data }
+}
+
+// 校验图形验证码，依照身份认证API: POST /identity/api/captcha/verify
+export async function verifyCaptcha({ token, code, signal }) {
+  const baseEnv = import.meta?.env?.VITE_IDENTITY_BASE_URL || ''
+  const base = typeof baseEnv === 'string' ? baseEnv.replace(/\/+$/, '') : ''
+  const url = base ? `${base}/api/captcha/verify` : `/identity/api/captcha/verify`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, code }),
+    signal,
+  })
+  if (!res.ok) {
+    let data
+    try { data = await res.json() } catch { data = await res.text().catch(() => '') }
+    const message = typeof data === 'string' ? data : (data?.errorMessage || data?.message || '验证码校验失败')
+    const err = new Error(message)
+    err.data = data
+    throw err
+  }
+  return { ok: true }
+}
+
 export function logout() {
   localStorage.removeItem('auth_token')
 }
@@ -67,14 +119,15 @@ export async function revokeToken({ signal } = {}) {
   })
 }
 
-export async function sendSmsVerificationCode({ phoneNumber, purpose = 1, signal } = {}) {
+export async function sendSmsVerificationCode({ phoneNumber, purpose = 2, signal } = {}) {
   const baseEnv = import.meta?.env?.VITE_IDENTITY_BASE_URL || ''
   const base = typeof baseEnv === 'string' ? baseEnv.replace(/\/+$/, '') : ''
   const url = base ? `${base}/api/auth/smsVerificationCode` : `/identity/api/auth/smsVerificationCode`
+  const message=''
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ phoneNumbers: [phoneNumber], purpose }),
+    body: JSON.stringify({ phoneNumbers: [phoneNumber], purpose,message }),
     signal,
   })
   if (!res.ok) {

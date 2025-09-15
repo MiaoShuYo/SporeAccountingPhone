@@ -37,6 +37,15 @@ async function handleLogout() {
   margin-top: 16px;
   padding: 8px 12px;
 }
+
+@media (orientation: landscape) {
+  ion-content::part(scroll) {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
 </style>
 
 
